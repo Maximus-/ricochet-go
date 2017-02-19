@@ -7,6 +7,10 @@ import (
 	"log"
 )
 
+type RicochetClient interface {
+	addContact(c *Contact)
+}
+
 type Client struct {
 	Backend ricochet.RicochetCoreClient
 
