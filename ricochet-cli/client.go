@@ -10,6 +10,7 @@ import (
 type RicochetClient interface {
 	addContact(c *Contact)
 	removeContact(c *Contact)
+	receivedMessage(c *Contact, msg string)
 }
 
 type Client struct {
