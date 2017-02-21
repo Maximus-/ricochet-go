@@ -116,11 +116,21 @@ func main() {
 	client := &Client{
 		Backend: rpc.NewRicochetCoreClient(conn),
 	}
+
 	Ui = UI{
 		Input:  input,
 		Stdout: input.Stdout(),
 		Client: client,
 	}
+
+	//ircEngine = IRCServer{
+	//	Port: 6667,
+	//}
+
+	client.AddListener(&Ui)
+
+	//distributor.AddListener(Ui)
+	//distributor.AddListener(ircEngine)
 
 	// Initialize data from backend and start UI command loop
 	fmt.Print("Connecting to backend...\n")
@@ -133,7 +143,6 @@ func main() {
 		Ui.PrintStatus()
 		client.Unblock()
 	}()
-
 	Ui.CommandLoop()
 }
 

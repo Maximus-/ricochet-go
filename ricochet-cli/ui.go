@@ -25,6 +25,42 @@ type UI struct {
 	baseChatConfig *readline.Config
 }
 
+func (Ui *UI) ReceivedMessage(msg *ricochet.Message) {
+	Ui.printMessage(msg)
+}
+
+func (Ui *UI) printMessage(msg *ricochet.Message) {
+	//if !Ui.CurrentContact.Conversation.active {
+	//	messages := fmt.Sprintf("%d new message", Ui.CurrentContact.Conversation.numUnread)
+	//		if c.numUnread > 1 {
+	//			messages += "s"
+	//		}
+	//	fmt.Fprintf(Ui.Stdout, "\r\x1b[31m[[ \x1b[1;34m%s\x1b[0m from \x1b[1m%s\x1b[0m (\x1b[1m%d\x1b[0m) \x1b[31m]]\x1b[39m\n", messages, Ui.CurrentContact.Data.Nickname, Ui.CurrentContact.Data.Id)
+	//		return
+	//}
+
+	// XXX actual timestamp
+	ts := "\x1b[90m" + time.Now().Format("15:04") + "\x1b[39m"
+	//
+	var direction string
+	if msg.Sender.IsSelf {
+		direction = "\x1b[34m<<\x1b[39m"
+	} else {
+		direction = "\a\x1b[31m>>\x1b[39m"
+	}
+
+	// XXX shell escaping
+	fmt.Fprintf(Ui.Stdout, "%s | %s %s %s\n",
+		ts,
+		Ui.CurrentContact.Data.Nickname,
+		direction,
+		msg.Text)
+}
+
+func (ui *UI) AddMessage(msg *ricochet.Message) {
+	ui.printMessage(msg)
+}
+
 func (ui *UI) CommandLoop() {
 	ui.setupInputConfigs()
 	ui.Input.SetConfig(ui.baseConfig)
@@ -49,6 +85,19 @@ func (ui *UI) setupInputConfigs() {
 	ui.baseChatConfig.UniqueEditLine = true
 }
 
+func (Ui UI) printMessageFromSelf(line string) {
+	ts := "\x1b[90m" + time.Now().Format("15:04") + "\x1b[39m"
+
+	var direction = "\x1b[34m<<\x1b[39m"
+
+	// XXX shell escaping
+	fmt.Fprintf(Ui.Stdout, "%s | %s %s %s\n",
+		ts,
+		"(me)",
+		direction,
+		line)
+}
+
 func (ui *UI) Execute(line string) error {
 	// Block client event handlers for threadsafety
 	ui.Client.Block()
@@ -60,11 +109,11 @@ func (ui *UI) Execute(line string) error {
 		if len(words[0]) > 0 && words[0][0] == '/' {
 			words[0] = words[0][1:]
 		} else {
+			ui.printMessageFromSelf(line)
 			ui.CurrentContact.Conversation.SendMessage(line)
 			return nil
 		}
 	}
-
 	if id, err := strconv.Atoi(words[0]); err == nil {
 		contact := ui.Client.Contacts.ById(int32(id))
 		if contact != nil {
@@ -373,6 +422,7 @@ func ColoredContactStatus(status ricochet.Contact_Status) string {
 }
 
 func (ui *UI) SetCurrentContact(contact *Contact) {
+
 	if ui.CurrentContact == contact {
 		return
 	}

@@ -7,10 +7,8 @@ import (
 	"log"
 )
 
-type RicochetClient interface {
-	addContact(c *Contact)
-	removeContact(c *Contact)
-	receivedMessage(c *Contact, msg string)
+type ClientListener interface {
+	ReceivedMessage(msg *ricochet.Message)
 }
 
 type Client struct {
@@ -21,6 +19,8 @@ type Client struct {
 
 	NetworkStatus ricochet.NetworkStatus
 	Contacts      *ContactList
+
+	ClientListeners []ClientListener
 
 	monitorsChannel chan interface{}
 	blockChannel    chan struct{}
@@ -65,11 +65,15 @@ func (c *Client) Initialize() error {
 	// Conversation monitor isn't started until contacts are populated
 
 	// Spawn routine to handle all events
-	go c.Run()
+	c.Run()
 
 	// Block until all state is populated
 	<-c.populatedChannel
 	return nil
+}
+
+func (c *Client) AddListener(lrn ClientListener) {
+	c.ClientListeners = append(c.ClientListeners, lrn)
 }
 
 func (c *Client) Run() {
@@ -273,14 +277,14 @@ func (c *Client) onConversationEvent(event *ricochet.ConversationEvent) {
 	case ricochet.ConversationEvent_POPULATE:
 		fallthrough
 	case ricochet.ConversationEvent_RECEIVE:
+		for _, ln := range c.ClientListeners {
+			ln.ReceivedMessage(message)
+		}
 		fallthrough
 	case ricochet.ConversationEvent_SEND:
-		remoteContact.Conversation.AddMessage(message,
-			event.Type == ricochet.ConversationEvent_POPULATE)
-
+		remoteContact.Conversation.AddMessage(message, event.Type == ricochet.ConversationEvent_POPULATE)
 	case ricochet.ConversationEvent_UPDATE:
 		remoteContact.Conversation.UpdateMessage(message)
-
 	default:
 		log.Printf("Ignoring conversation event with unknown type: %v", event)
 	}

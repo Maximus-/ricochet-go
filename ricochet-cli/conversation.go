@@ -6,7 +6,7 @@ import (
 	"github.com/ricochet-im/ricochet-go/rpc"
 	"golang.org/x/net/context"
 	"log"
-	"time"
+	//	"time"
 )
 
 const (
@@ -69,7 +69,8 @@ func (c *Conversation) AddMessage(msg *ricochet.Message, populating bool) {
 	}
 	c.trimBacklog()
 	if !populating {
-		c.printMessage(msg)
+
+		//c.printMessage(msg)
 		if c.active {
 			c.MarkAsReadBefore(msg)
 		}
@@ -97,6 +98,7 @@ func (c *Conversation) UpdateMessage(updatedMsg *ricochet.Message) {
 		c.messages[i] = updatedMsg
 		return
 	}
+	// XXX: pass this to distributor.
 
 	log.Printf("Ignoring message update for unknown message: %v", updatedMsg)
 }
@@ -163,7 +165,7 @@ func (c *Conversation) PrintContext() {
 	}
 
 	for i := start; i < len(c.messages); i++ {
-		c.printMessage(c.messages[i])
+		//	c.printMessage(c.messages[i])
 	}
 }
 
@@ -236,34 +238,6 @@ func (c *Conversation) validateMessage(msg *ricochet.Message) error {
 	}
 
 	return nil
-}
-
-func (c *Conversation) printMessage(msg *ricochet.Message) {
-	if !c.active {
-		messages := fmt.Sprintf("%d new message", c.numUnread)
-		if c.numUnread > 1 {
-			messages += "s"
-		}
-		fmt.Fprintf(Ui.Stdout, "\r\x1b[31m[[ \x1b[1;34m%s\x1b[0m from \x1b[1m%s\x1b[0m (\x1b[1m%d\x1b[0m) \x1b[31m]]\x1b[39m\n", messages, c.Contact.Data.Nickname, c.Contact.Data.Id)
-		return
-	}
-
-	// XXX actual timestamp
-	ts := "\x1b[90m" + time.Now().Format("15:04") + "\x1b[39m"
-
-	var direction string
-	if msg.Sender.IsSelf {
-		direction = "\x1b[34m<<\x1b[39m"
-	} else {
-		direction = "\x1b[31m>>\x1b[39m"
-	}
-
-	// XXX shell escaping
-	fmt.Fprintf(Ui.Stdout, "%s | %s %s %s\n",
-		ts,
-		c.Contact.Data.Nickname,
-		direction,
-		msg.Text)
 }
 
 func (c *Conversation) UnreadCount() int {
