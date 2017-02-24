@@ -236,6 +236,7 @@ func (c *Client) onContactEvent(event *ricochet.ContactEvent) {
 
 		contact, _ := c.Contacts.Deleted(data)
 
+		// XXX: just send this to all cls
 		if Ui.CurrentContact == contact {
 			Ui.SetCurrentContact(nil)
 		}

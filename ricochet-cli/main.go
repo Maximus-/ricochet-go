@@ -123,12 +123,13 @@ func main() {
 		Client: client,
 	}
 
-	//ircEngine = IRCServer{
-	//	Port: 6667,
-	//}
+	ircEngine := IRCServer{
+		Port: 6667,
+	}
+	ircEngine.BeginListening()
 
 	client.AddListener(&Ui)
-
+	client.AddListener(&ircEngine)
 	//distributor.AddListener(Ui)
 	//distributor.AddListener(ircEngine)
 
